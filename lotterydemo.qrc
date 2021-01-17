@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/LotteryDemo">
+        <file>Resources/pointer.png</file>
+        <file>Resources/back.png</file>
+        <file>Resources/backFrame.png</file>
+        <file>Resources/selected.png</file>
+        <file>Resources/selected2.png</file>
+        <file>Resources/selected3.png</file>
+        <file>Resources/selected4.png</file>
+        <file>Resources/selected5.png</file>
+    </qresource>
+</RCC>
