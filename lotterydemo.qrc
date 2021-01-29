@@ -2,11 +2,17 @@
     <qresource prefix="/LotteryDemo">
         <file>Resources/pointer.png</file>
         <file>Resources/back.png</file>
-        <file>Resources/backFrame.png</file>
         <file>Resources/selected.png</file>
         <file>Resources/selected2.png</file>
         <file>Resources/selected3.png</file>
         <file>Resources/selected4.png</file>
         <file>Resources/selected5.png</file>
+        <file>Resources/Head.png</file>
+        <file>Resources/selected6.png</file>
+        <file>Resources/selected7.png</file>
+        <file>Resources/selected8.png</file>
+        <file>Resources/selected9.png</file>
+        <file>Resources/selected10.png</file>
+        <file>Resources/zjl.png</file>
     </qresource>
 </RCC>

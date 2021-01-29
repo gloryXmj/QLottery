@@ -4,12 +4,15 @@
 
 TEMPLATE = app
 TARGET = LotteryDemo
-DESTDIR = ../Win32/Debug
+CONFIG(debug,debug|release):DESTDIR = ../Win32/Debug
+CONFIG(release,debug|release):DESTDIR = ../Win32/Release
+
 QT += core widgets gui
-CONFIG += debug
 DEFINES += WIN64 QT_DLL QT_WIDGETS_LIB
 
-QMAKE_CXXFLAGS += -gstabs+
+win32:CONFIG(debug,debug|release):CONFIG += console
+
+win32:CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -gstabs+
 
 INCLUDEPATH += ./GeneratedFiles \
     . \
@@ -22,12 +25,20 @@ RCC_DIR += ./GeneratedFiles
 
 
 HEADERS += ./lotterydemo.h \
-    PopWidget.h
+    messagewidget.h \
+    qDebug2Logcat.h
 SOURCES += ./main.cpp \
     ./lotterydemo.cpp \
-    PopWidget.cpp
+    messagewidget.cpp \
+    qDebug2Logcat.cpp
 FORMS += ./lotterydemo.ui \
-    PopWidget.ui
+    messagewidget.ui
 
 
 RESOURCES += lotterydemo.qrc
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
+

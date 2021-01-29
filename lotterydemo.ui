@@ -16,24 +16,12 @@
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
-  <property name="minimumSize">
-   <size>
-    <width>700</width>
-    <height>700</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>700</width>
-    <height>700</height>
-   </size>
-  </property>
   <property name="windowTitle">
    <string>LotteryDemo</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QWidget{
-background-color:transplant;
+	background-color: transparent; color: red;
 }</string>
   </property>
  </widget>

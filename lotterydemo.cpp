@@ -5,7 +5,17 @@
 #include <QMouseEvent>
 #include <QDebug>
 #include <QPropertyAnimation>
-#include <QMessageBox>
+#include "messagewidget.h"
+
+#include <QDesktopWidget>
+#include <QLabel>
+
+#ifdef Q_OS_ANDROID
+#include <android/log.h>
+#define LOG_TAG "QtDebug"
+//#define LOGW(str)  __android_log_write(ANDROID_LOG_WARN,LOG_TAG,str)
+#define LOG(...)  __android_log_print(ANDROID_LOG_DEBUG ,LOG_TAG, __VA_ARGS__)
+#endif //
 
 QString LottertData[] = { QStringLiteral("一"),
                           QStringLiteral("二"),
@@ -23,14 +33,26 @@ QString LottertData[] = { QStringLiteral("一"),
 #define STARTANGLE 0
 #define BACKGROUND_ROTAION_ANGLE_START 18
 LotteryDemo::LotteryDemo(QWidget *parent)
-    : QWidget(parent)
+    : QDialog(parent)
     , m_rotation(STARTANGLE)
 {
     ui.setupUi(this);
+    QPalette pal = palette();
+    pal.setColor(QPalette::Background, QColor(0x00,0xff,0x00,0x00));
+    setPalette(pal);
+    setWindowFlags(windowFlags()|Qt::FramelessWindowHint);
+    setAttribute(Qt::WA_TranslucentBackground,true);
     initControl();
     m_pixmapBack = QPixmap(":/LotteryDemo/Resources/back.png");
-    //注意缩放的时候需要接受返回值
-    m_pixmapBack = m_pixmapBack.scaled(this->width(),this->height(),
+    //注意缩放的时候需要接受返回值‘
+#ifdef Q_OS_ANDROID
+    int minW = std::min(this->width(),this->height());
+    int minH = std::min(this->width(),this->height());
+#else
+    int minW = this->width();
+    int minH = this->height();
+#endif
+    m_pixmapBack = m_pixmapBack.scaled(minW,minH,
                                        Qt::IgnoreAspectRatio,Qt::FastTransformation);
 
     m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected.png"));
@@ -38,70 +60,25 @@ LotteryDemo::LotteryDemo(QWidget *parent)
     m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected3.png"));
     m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected4.png"));
     m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected5.png"));
+    m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected6.png"));
+    m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected7.png"));
+    m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected8.png"));
+    m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected9.png"));
+    m_selectPixmap.push_back(QPixmap(":/LotteryDemo/Resources/selected10.png"));
+
 
     for(std::vector<QPixmap>::iterator iterPix = m_selectPixmap.begin(); iterPix != m_selectPixmap.end();iterPix++)
     {
-        *iterPix = (*iterPix).scaled(this->width(),this->height(),
+        *iterPix = (*iterPix).scaled(minW,minH,
                                      Qt::KeepAspectRatio,Qt::FastTransformation);
     }
-
-    ///抽中的需要遮住
-    for (int i =0 ; i < 2 ; i++ ) {
-        if(i != 0)
-        {
-            QPixmap pixmapSelect = m_selectPixmap.at(0).copy(this->rect());
-            clockwise(pixmapSelect,180);
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(5,pixmapSelect));
-        }
-        else
-        {
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(0,m_selectPixmap.at(0)));
-        }
-        if(i != 0)
-        {
-            QPixmap pixmapSelect = m_selectPixmap.at(1).copy(this->rect());
-            clockwise(pixmapSelect,180);
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(6,pixmapSelect));
-        }
-        else
-        {
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(1,m_selectPixmap.at(1)));
-        }
-        if(i != 0)
-        {
-            QPixmap pixmapSelect = m_selectPixmap.at(2).copy(this->rect());
-            clockwise(pixmapSelect,180);
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(7,pixmapSelect));
-        }
-        else
-        {
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(2,m_selectPixmap.at(2)));
-        }
-        if(i != 0)
-        {
-            QPixmap pixmapSelect = m_selectPixmap.at(3).copy(this->rect());
-            clockwise(pixmapSelect,180);
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(8,pixmapSelect));
-        }
-        else
-        {
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(3,m_selectPixmap.at(3)));
-        }
-        if(i != 0)
-        {
-            QPixmap pixmapSelect = m_selectPixmap.at(4).copy(this->rect());
-            clockwise(pixmapSelect,180);
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(9,pixmapSelect));
-        }
-        else
-        {
-            m_selPartPixmap.insert(std::pair<int,QPixmap>(4,m_selectPixmap.at(4)));
-        }
+    for(int i = 0; i < int(m_selectPixmap.size()); i++)
+    {
+        m_selPartPixmap.insert(std::pair<int,QPixmap>(i,m_selectPixmap.at(i)));
     }
-
     m_pointer = QPixmap(":/LotteryDemo/Resources/pointer.png");
     m_pointer = m_pointer.scaled(m_pointer.width()/2,m_pointer.height()/2);
-    this->setWindowFlags(windowFlags()|Qt::FramelessWindowHint);
+
 }
 
 LotteryDemo::~LotteryDemo()
@@ -126,14 +103,39 @@ void LotteryDemo::setRotate(int rotate)
     update();
 }
 
+void LotteryDemo::showHead()
+{
+    this->hide();
+    QLabel *label = new QLabel();
+    QPixmap logo(":/LotteryDemo/Resources/Head.png");
+    label->setPixmap(logo);
+    label->setWindowFlags(Qt::FramelessWindowHint);
+    QDesktopWidget dsk;
+    label->move(dsk.width()/2-label->width()/2,dsk.height()/2-label->height()/2);
+    label->show();
+    this->hide();
+    clock_t begin =  clock();
+    while ((clock() - begin) < 5000 ) {
+        QApplication::processEvents();
+    }
+    delete  label;
+    this->show();
+}
+
 void LotteryDemo::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.save();
     //窗口宽、高
+#ifdef Q_OS_ANDROID
+    int nWindowWidth = std::min(this->width(),this->height());
+    int nWindowHeight = std::min(this->height(),this->width());
+#else
     int nWindowWidth = this->width();
     int nWindowHeight = this->height();
+#endif //
+
     //背景图
     //中心偏移至中心位置
     painter.translate(nWindowWidth / 2.0, nWindowHeight / 2.0);
@@ -157,7 +159,6 @@ void LotteryDemo::paintEvent(QPaintEvent* event)
                                  m_pixmapBack.width(),
                                  m_pixmapBack.height()),
                            m_selPartPixmap.at(*iterSel));
-        //        qDebug()<<__FILE__<<__LINE__<< *iterSel ;
         painter.restore();
     }
     //绘制方向指针
@@ -169,12 +170,10 @@ void LotteryDemo::paintEvent(QPaintEvent* event)
     painter.drawPixmap(m_pointerRect, m_pointer);
     painter.restore();
 
-
-
     /*
    *__super 即调用基类的方法
    */
-    __super::paintEvent(event);
+    //    QWidget::paintEvent(event);
 }
 
 void LotteryDemo::mousePressEvent(QMouseEvent *event)
@@ -187,7 +186,7 @@ void LotteryDemo::mousePressEvent(QMouseEvent *event)
             OnButtonPressed();
         }
     }
-    __super::mousePressEvent(event);
+    QWidget::mousePressEvent(event);
 }
 
 void LotteryDemo::mouseMoveEvent(QMouseEvent *event)
@@ -201,8 +200,9 @@ void LotteryDemo::mouseMoveEvent(QMouseEvent *event)
     {
         setCursor(Qt::ArrowCursor);
     }
-    __super::mouseMoveEvent(event);
+    QWidget::mouseMoveEvent(event);
 }
+
 
 bool LotteryDemo::HasWiner(int index)
 {
@@ -234,6 +234,11 @@ int LotteryDemo::AngleToWinerid(const int angle) const
 
 void LotteryDemo::onRotateFinished()
 {
+    clock_t begin =  clock();
+    while ((clock() - begin) < 1000 ) {
+        QApplication::processEvents();
+    }
+
     float rotation = (m_rotation - 360 * 5+18)%360;
     int currentIndex = 0;
     for (int index = 0; index < 10; index++)
@@ -241,44 +246,43 @@ void LotteryDemo::onRotateFinished()
         rotation -= 36.0;
         if (rotation <= 0)
         {
-            qDebug()<<index;
             currentIndex = index;
             break;
         }
     }
-    QMessageBox msgBox;
+    MessageWidget msgBox;/*
     QString message = QStringLiteral("恭喜您中了: %1等奖！").arg(LottertData[currentIndex]);
-    msgBox.setText(message);
+    msgBox.setText(message);*/
+    this->hide();
     msgBox.exec();
+    this->show();
     m_winerId.push_back(currentIndex);
     //当达到最大值-1的时候就退出  最后一个不用抽
     if(m_winerId.size() == 9)
-        __super::close();
+        QWidget::close();
+    QWidget::update();
 }
 
 void LotteryDemo::OnButtonPressed()
 {
-#ifdef ALLOW_REPATE
-    int rotateRand = qrand() % 360 + 360 * 5;
-#else
     int randValue = (qrand() + BACKGROUND_ROTAION_ANGLE_START)%360;
     while(HasWiner(AngleToWinerid(randValue))){randValue=(qrand()+BACKGROUND_ROTAION_ANGLE_START)%360;}
     int rotateRand = randValue + 360 * 5;
-#endif //
-    m_rotation = STARTANGLE;
+    int startAngle = m_rotation%360;
+//    m_rotation = STARTANGLE;
+
     /*!
      * \brief animation
      * 特别注意这个是与 property 绑定的一旦animation 状态修改属性的值一会跟着修改
      */
     QPropertyAnimation *animation = new QPropertyAnimation(this, "rotate");
-    animation->setEasingCurve(QEasingCurve::OutCubic);
-    animation->setDuration(5000);
-    animation->setStartValue(STARTANGLE);
+    animation->setEasingCurve(QEasingCurve::InOutQuint);
+    animation->setStartValue(startAngle);
     animation->setEndValue(rotateRand);
+    animation->setDuration(5000);
     connect(animation, SIGNAL(finished()), this, SLOT(onRotateFinished()));
     animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
-
 
 //顺时针旋转
 void LotteryDemo::clockwise(QPixmap &image,double angle)
